@@ -8,6 +8,7 @@ package zero
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -198,8 +199,14 @@ func (s *Server) AssignIds(ctx context.Context, num *pb.Num) (*pb.AssignedIds, e
 			return errors.Errorf("Requested UID lease(%d) is greater than allowed(%d).",
 				num.Val, opts.limiterConfig.UidLeaseLimit)
 		}
+		// Ensure that num.Val can be safely converted to int64 without overflow.
+		if num.Val > uint64(math.MaxInt64) {
+			return errors.Errorf("Requested UID lease(%d) exceeds maximum supported value(%d).",
+				num.Val, uint64(math.MaxInt64))
+		}
 
-		if !s.rateLimiter.Allow(ns, int64(num.Val)) {
+		req := int64(num.Val)
+		if !s.rateLimiter.Allow(ns, req) {
 			// Return error after random delay.
 			//nolint:gosec // random generator in closed set does not require cryptographic precision
 			delay := rand.Intn(int(opts.limiterConfig.RefillAfter))
