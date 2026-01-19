@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -180,6 +181,12 @@ func (st *state) moveTablet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		x.SetStatus(w, x.ErrorInvalidRequest,
 			"Query parameter 'group' should contain a valid integer.")
+		return
+	}
+	if groupId > math.MaxUint32 {
+		w.WriteHeader(http.StatusBadRequest)
+		x.SetStatus(w, x.ErrorInvalidRequest,
+			"Query parameter 'group' is out of range for uint32.")
 		return
 	}
 	dstGroup := uint32(groupId)
