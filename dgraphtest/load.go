@@ -404,6 +404,12 @@ func (c *LocalCluster) LiveLoadFromExport(exportDir string) error {
 			continue
 		}
 
+		// Validate tar entry name to prevent directory traversal (Zip Slip).
+		// Reject absolute paths, empty or current-directory entries, and any name containing "..".
+		if header.Name == "" || header.Name == "." || strings.HasPrefix(header.Name, "/") || strings.Contains(header.Name, "..") {
+			return errors.Errorf("found invalid or unsafe file name in export: %v", header.Name)
+		}
+
 		fileName := filepath.Base(header.Name)
 		hostFile := filepath.Join(exportDirHost, fileName)
 		switch {
