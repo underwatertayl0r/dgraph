@@ -1593,7 +1593,13 @@ func (qs *queryState) handleMatchFunction(ctx context.Context, arg funcArgs) err
 			return err
 		}
 
-		max := int(arg.srcFn.threshold[0])
+		threshold := arg.srcFn.threshold[0]
+		// Ensure threshold fits into int to avoid overflow on 32-bit platforms.
+		if threshold < 0 || threshold > math.MaxInt32 {
+			return errors.Errorf("Match function threshold %d must be between 0 and %d",
+				threshold, math.MaxInt32)
+		}
+		max := int(threshold)
 		for _, val := range vals {
 			// convert data from binary to appropriate format
 			strVal, err := types.Convert(val, types.StringID)
