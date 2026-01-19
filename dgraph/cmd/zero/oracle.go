@@ -8,6 +8,7 @@ package zero
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -365,6 +366,9 @@ func (s *Server) commit(ctx context.Context, src *api.TxnContext) error {
 			gid, err := strconv.Atoi(splits[0])
 			if err != nil {
 				return errors.Wrapf(err, "unable to parse group id from %s", pkey)
+			}
+			if gid < 0 || gid > math.MaxUint32 {
+				return errors.Errorf("group id %d out of range for uint32 in %s", gid, pkey)
 			}
 			pred := splits[1]
 			if strings.Contains(pred, hnsw.VecKeyword) {
